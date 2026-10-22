@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  FREE
+  PRO
+  ADMIN
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  name          String?
+  avatarUrl     String?   // Ảnh đại diện
+  password      String?   // Để optional (?) vì nếu login bằng Google thì không cần password
+  authProvider  String    @default("LOCAL") // "LOCAL", "GOOGLE", "GITHUB"
+  role          Role      @default(FREE)
+  tokenVersion  Int       @default(0) // Dùng để ép user đăng xuất khỏi mọi thiết bị
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  workspaces    Workspace[]
+  uploads       Upload[]
+  
+  @@map("users")
+}
+
+model Workspace {
+  id            String   @id @default(uuid())
+  name          String
+  description   String?
+  thumbnailUrl  String?  // Ảnh preview thu nhỏ của bản vẽ (Lưu link Cloudinary/S3)
+  canvasAst     Json?    
+  isPublic      Boolean  @default(false)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  histories     GeneratedHistory[]
+  uploads       Upload[]
+
+  @@map("workspaces")
+  @@index([userId]) // Tối ưu tốc độ khi tìm kiếm tất cả workspace của 1 user
+}
+
+model Upload {
+  id            String   @id @default(uuid())
+  url           String   
+  publicId      String   
+  format        String?  // VD: "png", "jpeg"
+  bytes         Int      @default(0) // Kích thước file (bytes) để tính dung lượng gói FREE/PRO
+  
+  createdAt     DateTime @default(now())
+
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  workspaceId   String?
+  workspace     Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+
+  @@map("uploads")
+  @@index([userId])       // Tối ưu tốc độ query theo user
+  @@index([workspaceId])  // Tối ưu tốc độ query theo workspace
+}
+
+model GeneratedHistory {
+  id            String   @id @default(uuid())
+  flutterCode   String   @db.Text
+  prompt        String?  @db.Text 
+  
+  createdAt     DateTime @default(now())
+
+  workspaceId   String
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@map("generated_histories")
+  @@index([workspaceId])
+}
