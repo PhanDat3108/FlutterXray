@@ -23,7 +23,7 @@ export const loginUser = async (email: string, password: string) => {
     const existingUser = await prisma.user.findUnique({
         where: { email }
     })
-    if (!existingUser || !(await bcrypt.compare(password, existingUser.password))) {
+    if (!existingUser || !existingUser.password || !(await bcrypt.compare(password, existingUser.password))) {
         throw new Error("Email hoac mat khau sai")
     }
     const secretKey = process.env.JWT_SECRET
