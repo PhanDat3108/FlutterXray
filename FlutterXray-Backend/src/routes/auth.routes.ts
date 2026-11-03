@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { register, login } from '../controllers/auth.controllers';
 import { validate } from '../middlewares/validate.middleware';
-import { registerSchema, loginScheme } from '../validadations/auth.validations';
+import { registerSchema, loginScheme } from '../validations/auth.validations';
 import { verifyToken } from '../middlewares/auth.middleware'
 const router = Router();
 router.post("/register", validate(registerSchema), register)

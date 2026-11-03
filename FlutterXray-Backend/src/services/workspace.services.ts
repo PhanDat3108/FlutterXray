@@ -27,6 +27,7 @@ export const getWorkspaceById = async (workspaceId: string, userId: string) => {
             userId: userId,
         }
     })
+    return workspace;
 }
 export const updateWorkspace = async (workspaceId: string, userId: string, updateData: any) => {
     const existingWorkspace = await prisma.workspace.findUnique({
@@ -46,3 +47,12 @@ export const updateWorkspace = async (workspaceId: string, userId: string, updat
     })
     return updatedWorkspace;
 }
+export const createGeneratedHistory = async (workspaceId: string, flutterCode: string) => {
+    const historyRecord = await prisma.generatedHistory.create({
+        data: {
+            workspaceId: workspaceId,
+            flutterCode: flutterCode,
+        }
+    });
+    return historyRecord;
+};
